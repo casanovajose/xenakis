@@ -86,7 +86,13 @@ void Engine::compile() {
     assertMessageThread();
     RtBuilder builder;
     plugins_.compileAll(document_, builder);
+    plugins_.notifyCompiled(events_);
     snapshots_.publish(std::make_unique<RtSnapshot>(nextGeneration_++, builder.take()));
+}
+
+void Engine::pump() {
+    assertMessageThread();
+    plugins_.pump(events_);
 }
 
 void Engine::saveProject(const std::filesystem::path& path) const {
@@ -127,6 +133,7 @@ void Engine::loadProject(const std::filesystem::path& path) {
 
     document_.replaceFromJson(project);
     commandStack_.clear();
+    plugins_.afterLoad(document_);
     compile();
 }
 

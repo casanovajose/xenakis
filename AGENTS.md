@@ -4,7 +4,7 @@ Xenakis is a visual sequencer (paths, cursors, triggers, OSC) built as a small k
 
 ## Milestone fence
 
-M0 (spikes) and M1 (kernel, xPlugin standard, `xen.groups`) are in the tree. Do not implement `xen.transport`, `xen.paths`, `xen.osc`, the UI container, or musical time unless the user asks for that milestone. `xenakis run` playback is M2.
+M0 through M5 are in the tree: kernel, `xen.groups`, `xen.transport`, `xen.paths`, `xen.osc`, and the standalone frame. Do not start the Windows installer (M6) unless the user asks. `xenakis run piece.xenproj --no-audio` is the headless player.
 
 ## Architecture
 
@@ -22,6 +22,9 @@ M0 (spikes) and M1 (kernel, xPlugin standard, `xen.groups`) are in the tree. Do 
 - `kernel/` — document, commands and undo, events, property registry, xPlugin registry, control clock, compile and snapshot swap, real-time channel, `.xenproj`, UI slot ids.
 - `contracts/` — shared interface headers only. No feature contracts until the xPlugin that provides them.
 - `xplugins/groups/` — containment, `visible`, `mute`. Always on.
+- `xplugins/transport/` — playhead, `TempoSource`.
+- `xplugins/paths/` — paths, cursors, triggers.
+- `xplugins/osc/` — UDP OSC output.
 - `shells/cli`, `shells/standalone` — hosts. The standalone frame is not an xPlugin.
 - `tools/xplugin` — `new`, `lint`, `list`.
 - `spikes/` — M0 clock, OSC bundle, canvas. Not product features.

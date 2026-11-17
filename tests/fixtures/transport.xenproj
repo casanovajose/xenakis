@@ -1,0 +1,33 @@
+{
+  "format": "xenproj/1",
+  "id": "fixturetransport0001",
+  "xplugins": {
+    "xen.groups": 1,
+    "xen.transport": 1
+  },
+  "ids": {},
+  "entities": [
+    {
+      "id": "transport",
+      "components": {
+        "xen.transport": {
+          "Transport": {
+            "timeMode": "bpm",
+            "bpm": 120.0,
+            "meter": "4/4",
+            "absoluteUnit": "s",
+            "gridUnit": 1.0,
+            "loop": false,
+            "loopIn": 0.0,
+            "loopOut": 4.0,
+            "state": "stopped",
+            "position": 0.0,
+            "epoch": 0,
+            "jumped": false
+          }
+        }
+      }
+    }
+  ],
+  "links": []
+}

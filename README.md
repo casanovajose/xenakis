@@ -2,7 +2,7 @@
 
 Visual sequencer: paths, cursors, triggers, and OSC, on a small kernel and compiled xPlugins.
 
-M0 and M1 are in this tree. Transport, paths, and OSC output are later milestones. The decisions those milestones must follow are in [docs/decisions.md](docs/decisions.md). Measured spike results go in [docs/m0-results.md](docs/m0-results.md).
+M0 through M5 are in this tree: the kernel, groups, transport, paths, OSC, and the standalone frame. The installer is not. Decisions are in [docs/decisions.md](docs/decisions.md). Measurements are in [docs/m0-results.md](docs/m0-results.md) and [docs/m2-results.md](docs/m2-results.md).
 
 ## Build
 
@@ -19,7 +19,7 @@ Headless (no JUCE, no `ui/` targets):
 cmake -S . -B build -DXEN_HEADLESS=ON -DXEN_BUILD_GUI=OFF -DXEN_BUILD_OSC_SPIKE=OFF
 ```
 
-`xenakis version` and `xenakis load piece.xenproj` are the CLI. `xenakis run` waits for M2.
+`xenakis version` and `xenakis load piece.xenproj` read a project. `xenakis run piece.xenproj --no-audio` plays it. The standalone window is `Xenakis.exe` from a GUI build (`-DXEN_HEADLESS=OFF -DXEN_BUILD_GUI=ON`).
 
 ## Layout
 

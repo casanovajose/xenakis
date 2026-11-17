@@ -36,6 +36,7 @@ public:
     void setProperty(const EntityId& entity, std::string_view propertyId, Json value);
 
     void compile();
+    void pump();
     void saveProject(const std::filesystem::path& path) const;
     void loadProject(const std::filesystem::path& path);
 

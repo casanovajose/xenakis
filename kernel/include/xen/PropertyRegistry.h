@@ -28,6 +28,7 @@ class PropertyRegistry {
 public:
     void add(PropertyDesc desc);
     const PropertyDesc* find(std::string_view id) const;
+    const std::vector<PropertyDesc>& all() const { return items_; }
     std::vector<PropertyDesc> forOwner(std::string_view ownerId) const;
 
 private:

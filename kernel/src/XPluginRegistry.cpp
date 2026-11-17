@@ -30,6 +30,27 @@ void XPluginRegistry::shutdown(Document& document) {
     started_ = false;
 }
 
+void XPluginRegistry::afterLoad(Document& document) {
+    if (!started_)
+        throw std::runtime_error("xPlugins have not been started");
+    for (const auto& id : order_)
+        find(id)->afterLoad(document);
+}
+
+void XPluginRegistry::notifyCompiled(EventBus& events) {
+    if (!started_)
+        return;
+    for (const auto& id : order_)
+        find(id)->onCompiled(events);
+}
+
+void XPluginRegistry::pump(EventBus& events) {
+    if (!started_)
+        return;
+    for (const auto& id : order_)
+        find(id)->pump(events);
+}
+
 XPlugin* XPluginRegistry::find(std::string_view id) {
     for (const auto& plugin : plugins_) {
         if (plugin->info().id == id)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "xen/EventBus.h"
 #include "xen/XPlugin.h"
 
 #include <map>
@@ -15,6 +16,9 @@ public:
     void setPlugins(std::vector<std::unique_ptr<XPlugin>> plugins);
     void startup(Registry& registry, Document& document);
     void shutdown(Document& document);
+    void afterLoad(Document& document);
+    void notifyCompiled(EventBus& events);
+    void pump(EventBus& events);
 
     XPlugin* find(std::string_view id);
     const XPlugin* find(std::string_view id) const;

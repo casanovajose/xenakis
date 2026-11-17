@@ -116,7 +116,7 @@ TEST_CASE("unknown property does not enter the undo stack") {
     engine->execute("AddGroup", Json{{"name", "Intro"}});
     REQUIRE_THROWS(engine->setProperty("G1", "xen.groups.nope", true));
     REQUIRE(engine->undo());
-    REQUIRE(engine->document().entities().empty());
+    REQUIRE_FALSE(engine->document().contains("G1"));
 }
 
 TEST_CASE("property range is enforced") {
@@ -142,8 +142,14 @@ TEST_CASE("opaque xplugin data and migration survive save and load") {
     input >> project;
     input.close();
     project["xplugins"]["xen.groups"] = 0;
-    project["entities"][0]["components"]["xen.groups"]["Group"].erase("visible");
-    project["entities"][0]["components"]["xen.future"] = Json{{"keep", true}, {"n", 7}};
+    Json* groupEntity = nullptr;
+    for (auto& entity : project["entities"]) {
+        if (entity.value("id", std::string()) == "G1")
+            groupEntity = &entity;
+    }
+    REQUIRE(groupEntity != nullptr);
+    (*groupEntity)["components"]["xen.groups"]["Group"].erase("visible");
+    (*groupEntity)["components"]["xen.future"] = Json{{"keep", true}, {"n", 7}};
     std::ofstream output(path);
     output << project.dump(2);
     output.close();
@@ -160,7 +166,13 @@ TEST_CASE("opaque xplugin data and migration survive save and load") {
         std::ifstream check(saved);
         check >> again;
     }
-    REQUIRE(again["entities"][0]["components"]["xen.future"]["n"] == 7);
+    const Json* savedGroup = nullptr;
+    for (const auto& entity : again["entities"]) {
+        if (entity.value("id", std::string()) == "G1")
+            savedGroup = &entity;
+    }
+    REQUIRE(savedGroup != nullptr);
+    REQUIRE((*savedGroup)["components"]["xen.future"]["n"] == 7);
     REQUIRE(again["xplugins"]["xen.groups"] == 1);
     std::filesystem::remove(path);
     std::filesystem::remove(saved);

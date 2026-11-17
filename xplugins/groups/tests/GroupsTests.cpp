@@ -24,6 +24,15 @@ const Json& groupOf(const Document& document, const EntityId& id) {
     return *group;
 }
 
+std::vector<EntityId> scoreEntities(const Document& document) {
+    std::vector<EntityId> ids;
+    for (const auto& id : document.entities()) {
+        if (id != "transport" && id != "osc")
+            ids.push_back(id);
+    }
+    return ids;
+}
+
 } // namespace
 
 TEST_CASE("groups create, nest, reorder, and undo") {
@@ -31,7 +40,7 @@ TEST_CASE("groups create, nest, reorder, and undo") {
     engine->execute("AddGroup", Json{{"name", "Intro"}});
     engine->execute("AddGroup", Json{{"name", "Water"}});
     engine->execute("AddGroup", Json{{"name", "Air"}});
-    REQUIRE(engine->document().entities() == std::vector<EntityId>{"G1", "G2", "G3"});
+    REQUIRE(scoreEntities(engine->document()) == std::vector<EntityId>{"G1", "G2", "G3"});
 
     engine->execute("MoveToGroup", Json{{"entity", "G2"}, {"group", "G1"}});
     engine->execute("MoveToGroup", Json{{"entity", "G3"}, {"group", "G1"}});
@@ -76,5 +85,5 @@ TEST_CASE("group ids are not reused after undo") {
     engine->execute("AddGroup", Json{{"name", "B"}});
     REQUIRE(engine->undo());
     engine->execute("AddGroup", Json{{"name", "C"}});
-    REQUIRE(engine->document().entities() == std::vector<EntityId>{"G1", "G3"});
+    REQUIRE(scoreEntities(engine->document()) == std::vector<EntityId>{"G1", "G3"});
 }

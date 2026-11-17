@@ -1,5 +1,6 @@
 #pragma once
 
+#include "xen/EventBus.h"
 #include "xen/Json.h"
 #include "xen/Registry.h"
 #include "xen/Snapshot.h"
@@ -29,7 +30,10 @@ public:
     virtual void contribute(Registry& registry) = 0;
     virtual void activate(Document&) {}
     virtual void deactivate(Document&) {}
+    virtual void afterLoad(Document&) {}
     virtual void compile(const Document&, RtBuilder&) {}
+    virtual void onCompiled(EventBus&) {}
+    virtual void pump(EventBus&) {}
     virtual void migrate(Json&, int) {}
 };
 

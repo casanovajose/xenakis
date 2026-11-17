@@ -48,5 +48,10 @@ if(XEN_BUILD_TESTS)
     add_test(NAME kernel_boundaries COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/tools/check_kernel_boundaries.py")
     add_test(NAME lint_rejects_cross_include COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/tools/check_lint_fails.py")
     add_test(NAME cli_version COMMAND xenakis version)
-    set_tests_properties(cli_version PROPERTIES PASS_REGULAR_EXPRESSION "xenakis 0\\.1\\.0-m1")
+    set_tests_properties(cli_version PROPERTIES PASS_REGULAR_EXPRESSION "xenakis 0\\.1\\.0-m5")
+    add_test(
+        NAME cli_run
+        COMMAND xenakis run "${CMAKE_SOURCE_DIR}/tests/fixtures/transport.xenproj" --no-audio
+                --commands "play;wait 0.05;pause;seek 1;stop")
+    set_tests_properties(cli_run PROPERTIES PASS_REGULAR_EXPRESSION "command=stop state=stopped seconds=0\\.000000 beats=0\\.000000")
 endif()
