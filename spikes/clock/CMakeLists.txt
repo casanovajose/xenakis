@@ -1,0 +1,8 @@
+add_executable(xen_spike_clock main.cpp)
+target_link_libraries(xen_spike_clock PRIVATE xen_kernel)
+target_compile_features(xen_spike_clock PRIVATE cxx_std_20)
+if(MSVC)
+    target_compile_options(xen_spike_clock PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(xen_spike_clock PRIVATE -Wall -Wextra -Wpedantic)
+endif()

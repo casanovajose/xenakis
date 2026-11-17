@@ -1,0 +1,18 @@
+---
+description: Which Xenakis milestones are in play
+alwaysApply: true
+---
+
+# Milestones
+
+M0 and M1 are implemented. Do not start a later milestone unless the user asks for it.
+
+- M2 is `xen.transport`, `TempoSource`, and `xenakis run --no-audio`.
+- M3 is `xen.paths` (polylines, cubic Béziers, cursors, triggers).
+- M4 is `xen.osc` (UDP, `/xen/...` addresses, timetagged bundles).
+- M5 is the UI container: toolbar, layers, time grid, inspector, OSC panel.
+- M6 is the Windows installer and soak test.
+
+Spikes under `spikes/` stay prototypes. Do not promote spike code into an xPlugin.
+
+Locked product decisions live in `docs/decisions.md`. If a change would contradict them, stop and say so.

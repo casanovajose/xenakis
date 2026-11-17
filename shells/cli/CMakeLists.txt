@@ -1,0 +1,8 @@
+add_executable(xenakis main.cpp)
+target_link_libraries(xenakis PRIVATE xen_xplugins xen_kernel)
+target_compile_features(xenakis PRIVATE cxx_std_20)
+if(MSVC)
+    target_compile_options(xenakis PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(xenakis PRIVATE -Wall -Wextra -Wpedantic)
+endif()
