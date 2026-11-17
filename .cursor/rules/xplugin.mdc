@@ -1,0 +1,24 @@
+---
+description: How to add or edit a Xenakis xPlugin
+globs: xplugins/**,tools/templates/xplugin/**,tools/xplugin
+alwaysApply: false
+---
+
+# xPlugin
+
+- Folder: `xplugins/<folder>/xplugin.cmake` plus `XPlugin` sources, `README.md`, and tests.
+- `xen_define_xplugin` records the class. Do not self-register with a static initializer.
+- `info().id` is `xen.<folder>`. `info().required` is a hard dependency (off if missing). `info().enhances` is soft.
+- `contribute` registers component types, properties, commands, and event names. `compile` emits `RtObject`s. `migrate` upgrades that xPlugin's JSON only.
+- Property ids are qualified: `xen.groups.visible`. Defaults, type, and numeric range live on the descriptor.
+- Groups is always on. Do not add a switch that turns it off.
+- New plugins come from `python tools/xplugin new <folder>`, then lint.
+
+```cpp
+void ExampleXPlugin::contribute(Registry& registry) {
+    registry.components().add("xen.example", "Thing");
+    registry.properties().add({
+        "xen.example.enabled", "xen.example", "Thing", "enabled",
+        ValueType::Bool, false, std::nullopt, std::nullopt, "enabled"});
+}
+```

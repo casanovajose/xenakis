@@ -1,0 +1,16 @@
+/build/
+/build-*/
+/out/
+/.vs/
+/CMakeUserPresets.json
+/cmake-build-*/
+*.user
+*.obj
+*.exe
+*.ilk
+*.pdb
+clock-result.json
+osc-result.json
+canvas-result.json
+osc-sent.json
+*.sent.json

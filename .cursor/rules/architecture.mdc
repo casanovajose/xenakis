@@ -1,0 +1,22 @@
+---
+description: Kernel and xPlugin boundaries for Xenakis
+alwaysApply: true
+---
+
+# Architecture
+
+- Kernel code must not name an xPlugin (`xen.groups`, `xen.paths`, `xen.transport`, `xen.osc`, or any `xplugins/` include). Register features only through `XPlugin` and the generated `createXPlugins()`.
+- An xPlugin includes only `kernel/` and `contracts/` headers. It must not include or link another xPlugin. `python tools/xplugin lint` enforces this.
+- An xPlugin writes only its own components, via commands. Properties go through the property registry (`SetProperty`), not ad-hoc setters.
+- `rt/` functions that run on the control clock are `noexcept` and do not allocate, lock, or throw. Build snapshot data in `compile` on the message thread.
+- `ui/` is a separate target behind `if(NOT XEN_HEADLESS)`. Do not link it into `xenakis` or `xen_tests`.
+- Message-thread types (`Document`, `CommandStack`, `EventBus`) are not used from the clock thread. The clock reads the published snapshot only.
+- Prefer adding a contract in `contracts/` over a cross-xPlugin call. Do not add `TempoSource` until `xen.transport`.
+
+```cpp
+// Bad: kernel or xen.osc includes groups to ask if a group is muted.
+#include "GroupsXPlugin.h"
+
+// Good: read the component JSON the owner documented.
+auto* group = document.findComponent(id, "xen.groups", "Group");
+```

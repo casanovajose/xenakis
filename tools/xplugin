@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Create and check Xenakis xPlugins. Usage: python tools/xplugin <new|lint|list>."""
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMPLATE = ROOT / "tools" / "templates" / "xplugin"
+INCLUDE_RE = re.compile(r'#\s*include\s*[<"]([^>"]+)[>"]')
+SOURCE_SUFFIXES = {".h", ".hpp", ".hh", ".cpp", ".cxx", ".cc"}
+
+
+def repo_root(explicit: str) -> Path:
+    return Path(explicit).resolve() if explicit else ROOT
+
+
+def class_name(folder: str) -> str:
+    return "".join(part[:1].upper() + part[1:] for part in folder.split("_")) + "XPlugin"
+
+
+def display_name(folder: str) -> str:
+    return " ".join(part[:1].upper() + part[1:] for part in folder.split("_"))
+
+
+def plugins(root: Path):
+    directory = root / "xplugins"
+    if not directory.is_dir():
+        return []
+    return sorted(path for path in directory.iterdir() if path.is_dir())
+
+
+def command_new(folder: str, force: bool) -> int:
+    if not re.fullmatch(r"[a-z][a-z0-9_]*", folder):
+        print("folder must match [a-z][a-z0-9_]*", file=sys.stderr)
+        return 2
+    destination = ROOT / "xplugins" / folder
+    if destination.exists() and not force:
+        print(f"{destination} already exists", file=sys.stderr)
+        return 2
+    tokens = {
+        "__FOLDER__": folder,
+        "__ID__": f"xen.{folder}",
+        "__CLASS__": class_name(folder),
+        "__NAME__": display_name(folder),
+        "__NS__": folder,
+    }
+    mapping = {
+        "xplugin.cmake.tpl": "xplugin.cmake",
+        "Plugin.h.tpl": f"{tokens['__CLASS__']}.h",
+        "Plugin.cpp.tpl": f"{tokens['__CLASS__']}.cpp",
+        "README.md.tpl": "README.md",
+        "tests/smoke.cpp.tpl": "tests/smoke.cpp",
+        "ui/PluginUi.cpp.tpl": f"ui/{tokens['__CLASS__']}Ui.cpp",
+        "rt/Nop.h.tpl": "rt/Nop.h",
+    }
+    for source_name, target_name in mapping.items():
+        text = (TEMPLATE / source_name).read_text(encoding="utf-8")
+        for key, value in tokens.items():
+            text = text.replace(key, value)
+        target = destination / target_name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+    print(f"created xplugins/{folder} ({tokens['__ID__']})")
+    return 0
+
+
+def command_list(root: Path) -> int:
+    for plugin in plugins(root):
+        text = (plugin / "xplugin.cmake").read_text(encoding="utf-8") if (plugin / "xplugin.cmake").exists() else ""
+        match = re.search(r"\bID\s+(\S+)", text)
+        print(f"{plugin.name}\t{match.group(1) if match else '?'}")
+    return 0
+
+
+def command_lint(root: Path) -> int:
+    failures = []
+    found = plugins(root)
+    names = [plugin.name for plugin in found]
+    if not names:
+        print("no xplugins to lint", file=sys.stderr)
+        return 1
+    for plugin in found:
+        if not (plugin / "xplugin.cmake").is_file():
+            failures.append(f"{plugin.name}: missing xplugin.cmake")
+            continue
+        if not (plugin / "README.md").is_file():
+            failures.append(f"{plugin.name}: missing README.md")
+        cmake = (plugin / "xplugin.cmake").read_text(encoding="utf-8")
+        if re.search(r"(^|[^A-Za-z0-9_])ui/", cmake) and "XEN_HEADLESS" not in cmake:
+            failures.append(f"{plugin.name}: ui/ is not gated on XEN_HEADLESS")
+        for other in names:
+            if other != plugin.name and f"xen_xplugin_{other}" in cmake:
+                failures.append(f"{plugin.name}: links xplugin {other}")
+        for source in plugin.rglob("*"):
+            if source.suffix.lower() not in SOURCE_SUFFIXES:
+                continue
+            text = source.read_text(encoding="utf-8")
+            relative = source.relative_to(plugin).as_posix()
+            for match in INCLUDE_RE.finditer(text):
+                include = match.group(1).replace("\\", "/")
+                for other in names:
+                    if other == plugin.name:
+                        continue
+                    if f"xplugins/{other}" in include or include.startswith(f"../{other}/") or f"/{other}/" in f"/{include}":
+                        failures.append(f"{plugin.name}: {relative} includes {other} ({include})")
+            if relative.startswith("rt/"):
+                for number, line in enumerate(text.splitlines(), 1):
+                    stripped = line.strip()
+                    if stripped.startswith("//") or stripped.startswith("*"):
+                        continue
+                    if "throw " in stripped:
+                        failures.append(f"{plugin.name}: {relative}:{number} throws from rt/")
+    if failures:
+        print("xplugin lint failed:")
+        for failure in failures:
+            print(f"  {failure}")
+        return 1
+    print(f"xplugin lint passed ({len(names)} xplugins)")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="xplugin")
+    parser.add_argument("command", choices=("new", "lint", "list"))
+    parser.add_argument("folder", nargs="?")
+    parser.add_argument("--root", help="tree to lint instead of the repo")
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+    if args.command == "new":
+        if not args.folder:
+            print("xplugin new <folder>", file=sys.stderr)
+            return 2
+        return command_new(args.folder, args.force)
+    root = repo_root(args.root)
+    if args.command == "list":
+        return command_list(root)
+    return command_lint(root)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

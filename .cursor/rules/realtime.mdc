@@ -1,0 +1,18 @@
+---
+description: Real-time code rules for the control clock and rt/
+globs: "**/rt/**,kernel/src/ControlClock.cpp,kernel/src/PreciseSleep_*.cpp,kernel/include/xen/RtChannel.h,kernel/include/xen/Snapshot.h"
+alwaysApply: false
+---
+
+# Real time
+
+- Clock callbacks and `RtObject::tick` are `noexcept`. No `new`, `malloc`, `make_shared`, `push_back`, `std::string` growth, locks, or I/O.
+- Publish a new snapshot from the message thread. The clock only loads the pointer and acknowledges the generation it finished.
+- `RtChannel` is for trivially copyable values. If a value does not fit, the push fails; the caller does not allocate a fallback on the clock thread.
+- Do not read or write `Document` from a tick.
+
+```cpp
+void GroupSnapshot::tick(const xen::TickInfo&) noexcept {
+    ++ticks_; // already allocated; no heap growth
+}
+```

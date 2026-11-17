@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  headless:
+    name: headless-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Scaffold a sample xPlugin
+        run: python tools/xplugin new ci_sample
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DXEN_HEADLESS=ON -DXEN_BUILD_GUI=OFF -DXEN_BUILD_OSC_SPIKE=OFF
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: UI target stays out of the headless build
+        shell: bash
+        run: |
+          set +e
+          cmake --build build --config Release --target xen_xplugin_ci_sample_ui
+          code=$?
+          if [ $code -eq 0 ]; then
+            echo "headless build produced an xPlugin ui target"
+            exit 1
+          fi
+      - name: Clock jitter
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          exe=$(find build -name 'xen_spike_clock.exe' -o -name 'xen_spike_clock' | head -n 1)
+          "$exe" --seconds 8 --period-ms 5 --strict --out "$RUNNER_TEMP/clock.json"
+          cat "$RUNNER_TEMP/clock.json"
+
+  juce:
+    name: juce-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libasound2-dev libjack-jackd2-dev \
+            libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            libxext-dev libfreetype6-dev libcurl4-openssl-dev
+      - name: macOS packages
+        if: runner.os == 'macOS'
+        run: brew install liblo || true
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DXEN_HEADLESS=OFF -DXEN_BUILD_GUI=ON -DXEN_BUILD_OSC_SPIKE=ON -DXEN_BUILD_TESTS=OFF
+      - name: Build
+        run: cmake --build build --config Release --target xenakis_standalone xen_spike_canvas xen_spike_osc
